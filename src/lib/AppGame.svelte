@@ -5,6 +5,31 @@
   let canvas: HTMLCanvasElement;
   let ctx: CanvasRenderingContext2D;
   $: [chX, chY] = [10, height - 10];
+  $: platforms = [{ x: 0, y: height / 2, width: 150, height: 20 }] as Array<{
+    x: number;
+    y: number;
+    width: number;
+    height: number;
+  }>;
+  $: platform = {
+    draw: () => {
+      for (const { x, y, width, height } of platforms) {
+        ctx.beginPath();
+        ctx.rect(x, y, width, height);
+        ctx.fillStyle = "green";
+        ctx.fill();
+        ctx.closePath();
+      }
+    },
+    create: (count = 1) => {
+      platforms.push({
+        x: width / 2,
+        y: height / 2 - 100,
+        width: 150,
+        height: 20,
+      });
+    },
+  };
   $: character = {
     x: chX,
     y: chY,
@@ -18,17 +43,16 @@
       ctx.fill();
       ctx.closePath();
     },
-    move: (e: any) => {
-      handleKeyPress(e);
+    move: (
+      e: KeyboardEvent & {
+        currentTarget: EventTarget & HTMLCanvasElement;
+      }
+    ) => {
+      handleKeyPress(e.key);
     },
   };
 
-  function handleKeyPress(
-    e: KeyboardEvent & {
-      currentTarget: EventTarget & HTMLCanvasElement;
-    }
-  ) {
-    const key = e.key;
+  function handleKeyPress(key: string) {
     switch (key) {
       case "d":
         chX += character.speed;
@@ -38,6 +62,7 @@
         break;
       case " ":
         // JUMP
+        chY -= character.speed;
         console.log("JUMP");
         break;
       default:
@@ -49,11 +74,13 @@
   function render() {
     ctx.clearRect(0, 0, width, height);
     character.draw();
+    platform.draw();
     requestAnimationFrame(render);
   }
   onMount(() => {
     canvas.focus();
     ctx = canvas.getContext("2d")!;
+    platform.create();
     render();
   });
 </script>

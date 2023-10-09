@@ -4,6 +4,8 @@
   const [width, height] = [700, 400];
   let canvas: HTMLCanvasElement;
   let ctx: CanvasRenderingContext2D;
+  let velocityY = 0; // Vertical velocity
+  const gravity = 1; // Gravity value
   $: [chX, chY] = [10, height - 10];
   $: platforms = [{ x: 0, y: height / 2, width: 150, height: 20 }] as Array<{
     x: number;
@@ -42,6 +44,16 @@
       ctx.fillStyle = "red";
       ctx.fill();
       ctx.closePath();
+      velocityY += gravity;
+
+      // Update the character's vertical position based on velocity
+      chY += velocityY;
+
+      // Ensure the character doesn't go below the ground level
+      if (chY > height - character.height) {
+        chY = height - character.height;
+        velocityY = 0; // Reset the vertical velocity
+      }
     },
     move: (
       e: KeyboardEvent & {
@@ -61,8 +73,12 @@
         chX -= character.speed;
         break;
       case " ":
-        // JUMP
-        chY -= character.speed;
+        // Check if the character is on the ground (not already jumping)
+        if (chY === height - character.height) {
+          // Apply an upward velocity to initiate the jump
+          velocityY = -15; // Adjust the jump strength as needed
+          console.log("JUMP");
+        }
         console.log("JUMP");
         break;
       default:

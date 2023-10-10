@@ -1,68 +1,65 @@
 <script lang="ts">
   import { onMount } from "svelte";
-
   const [width, height] = [700, 400];
   let canvas: HTMLCanvasElement;
   let ctx: CanvasRenderingContext2D;
   let velocityY = 0; // Vertical velocity
   const gravity = 1; // Gravity value
   $: [chX, chY] = [10, height - 10];
-  $: platforms = [{ x: 0, y: height / 2, width: 150, height: 20 }] as Array<{
+
+  $: platforms = [
+    { x: 50, y: height / 2 + 120, width: 150, height: 20 },
+  ] as Array<{
     x: number;
     y: number;
     width: number;
     height: number;
   }>;
-  $: platform = {
-    draw: () => {
-      for (const { x, y, width, height } of platforms) {
-        ctx.beginPath();
-        ctx.rect(x, y, width, height);
-        ctx.fillStyle = "green";
-        ctx.fill();
-        ctx.closePath();
-      }
-    },
-    create: (count = 1) => {
-      platforms.push({
-        x: width / 2,
-        y: height / 2 - 100,
-        width: 150,
-        height: 20,
-      });
-    },
-  };
+
   $: character = {
     x: chX,
     y: chY,
     height: 10,
     width: 10,
     speed: 10,
-    draw: () => {
+  };
+
+  function createPlatforms(count = 1) {
+    platforms.push({
+      x: width / 2 - 50,
+      y: height / 2 + 50,
+      width: 150,
+      height: 20,
+    });
+  }
+
+  function drawPlatform() {
+    for (const { x, y, width, height } of platforms) {
       ctx.beginPath();
-      ctx.rect(character.x, character.y, character.width, character.height);
-      ctx.fillStyle = "red";
+      ctx.rect(x, y, width, height);
+      ctx.fillStyle = "green";
       ctx.fill();
       ctx.closePath();
-      velocityY += gravity;
+    }
+  }
 
-      // Update the character's vertical position based on velocity
-      chY += velocityY;
+  function drawCharacter() {
+    ctx.beginPath();
+    ctx.rect(character.x, character.y, character.width, character.height);
+    ctx.fillStyle = "red";
+    ctx.fill();
+    ctx.closePath();
+    velocityY += gravity;
 
-      // Ensure the character doesn't go below the ground level
-      if (chY > height - character.height) {
-        chY = height - character.height;
-        velocityY = 0; // Reset the vertical velocity
-      }
-    },
-    move: (
-      e: KeyboardEvent & {
-        currentTarget: EventTarget & HTMLCanvasElement;
-      }
-    ) => {
-      handleKeyPress(e.key);
-    },
-  };
+    // Update the character's vertical position based on velocity
+    chY += velocityY;
+
+    // Ensure the character doesn't go below the ground level
+    if (chY > height - character.height) {
+      chY = height - character.height;
+      velocityY = 0; // Reset the vertical velocity
+    }
+  }
 
   function handleKeyPress(key: string) {
     switch (key) {
@@ -86,17 +83,31 @@
         break;
     }
   }
+  // Check if the character is colliding with any platform
+  function isCollidingWithPlatform() {
+    for (const platform of platforms) {
+      if (
+        character.x + character.width > platform.x &&
+        character.x < platform.x + platform.width &&
+        character.y + character.height > platform.y &&
+        character.y < platform.y + platform.height
+      ) {
+        return true;
+      }
+    }
+    return false;
+  }
 
   function render() {
     ctx.clearRect(0, 0, width, height);
-    character.draw();
-    platform.draw();
+    drawCharacter();
+    drawPlatform();
     requestAnimationFrame(render);
   }
   onMount(() => {
     canvas.focus();
     ctx = canvas.getContext("2d")!;
-    platform.create();
+    createPlatforms();
     render();
   });
 </script>
@@ -106,7 +117,7 @@
   bind:this={canvas}
   {width}
   {height}
-  on:keypress={(e) => character.move(e)}
+  on:keypress={(e) => handleKeyPress(e.key)}
 />
 
 <style>

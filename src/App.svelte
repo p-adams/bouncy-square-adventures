@@ -3,7 +3,7 @@
 </script>
 
 <main>
-  <h1>Stellar Adventures</h1>
+  <h1>Bouncy Square Adventures</h1>
 
   <div class="card">
     <AppGame />

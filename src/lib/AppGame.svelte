@@ -1,113 +1,104 @@
 <script lang="ts">
   import { onMount } from "svelte";
-  const [width, height] = [700, 400];
+
+  const [width, height] = [800, 400];
   let canvas: HTMLCanvasElement;
   let ctx: CanvasRenderingContext2D;
-  let velocityY = 0; // Vertical velocity
-  const gravity = 1; // Gravity value
-  $: [chX, chY] = [10, height - 10];
-
-  $: platforms = [
-    { x: 50, y: height / 2 + 120, width: 150, height: 20 },
-  ] as Array<{
-    x: number;
-    y: number;
-    width: number;
-    height: number;
-  }>;
-
-  $: character = {
-    x: chX,
-    y: chY,
-    height: 10,
-    width: 10,
-    speed: 10,
+  let character = {
+    x: 50,
+    y: height - 50,
+    width: 30,
+    height: 30,
+    velocityY: 0,
+    isJumping: false,
+    speed: 15,
   };
+  let platforms = [
+    { x: 50, y: height - 20, width: 150, height: 10 },
+    { x: 250, y: height - 50, width: 150, height: 10 },
+    // Add more platforms as needed
+  ];
 
-  function createPlatforms(count = 1) {
-    platforms.push({
-      x: width / 2 - 50,
-      y: height / 2 + 50,
-      width: 150,
-      height: 20,
+  const gravity = 0.5;
+  const jumpStrength = -15;
+
+  function drawCharacter() {
+    ctx.fillStyle = "red";
+    ctx.fillRect(character.x, character.y, character.width, character.height);
+  }
+
+  function drawPlatforms() {
+    ctx.fillStyle = "green";
+    platforms.forEach((platform) => {
+      ctx.fillRect(platform.x, platform.y, platform.width, platform.height);
     });
   }
 
-  function drawPlatform() {
-    for (const { x, y, width, height } of platforms) {
-      ctx.beginPath();
-      ctx.rect(x, y, width, height);
-      ctx.fillStyle = "green";
-      ctx.fill();
-      ctx.closePath();
+  function jump() {
+    if (!character.isJumping) {
+      character.isJumping = true;
+      character.velocityY = jumpStrength;
     }
   }
 
-  function drawCharacter() {
-    ctx.beginPath();
-    ctx.rect(character.x, character.y, character.width, character.height);
-    ctx.fillStyle = "red";
-    ctx.fill();
-    ctx.closePath();
-    velocityY += gravity;
+  function updateCharacterPosition() {
+    character.y += character.velocityY;
+    character.velocityY += gravity;
 
-    // Update the character's vertical position based on velocity
-    chY += velocityY;
-
-    // Ensure the character doesn't go below the ground level
-    if (chY > height - character.height) {
-      chY = height - character.height;
-      velocityY = 0; // Reset the vertical velocity
+    if (character.y > height - character.height) {
+      character.y = height - character.height;
+      character.isJumping = false;
     }
   }
 
-  function handleKeyPress(key: string) {
-    switch (key) {
-      case "d":
-        chX += character.speed;
-        break;
-      case "a":
-        chX -= character.speed;
-        break;
-      case " ":
-        // Check if the character is on the ground (not already jumping)
-        if (chY === height - character.height) {
-          // Apply an upward velocity to initiate the jump
-          velocityY = -15; // Adjust the jump strength as needed
-          console.log("JUMP");
-        }
-        console.log("JUMP");
-        break;
-      default:
-        console.log(`${key} key not supported`);
-        break;
-    }
-  }
-  // Check if the character is colliding with any platform
-  function isCollidingWithPlatform() {
-    for (const platform of platforms) {
+  function checkCollisions() {
+    platforms.forEach((platform) => {
       if (
         character.x + character.width > platform.x &&
         character.x < platform.x + platform.width &&
-        character.y + character.height > platform.y &&
+        character.y + character.height >= platform.y &&
         character.y < platform.y + platform.height
       ) {
-        return true;
+        if (character.velocityY > 0) {
+          character.y = platform.y - character.height;
+          character.isJumping = false;
+          character.velocityY = 0;
+        }
       }
+    });
+  }
+
+  function handleKeyPress(event: KeyboardEvent) {
+    switch (event.key) {
+      case " ":
+        if (!character.isJumping) {
+          jump();
+        }
+        break;
+      case "d":
+        character.x += character.speed;
+        break;
+      case "a":
+        character.x -= character.speed;
+        break;
+      default:
+        break;
     }
-    return false;
   }
 
   function render() {
     ctx.clearRect(0, 0, width, height);
+    drawPlatforms();
     drawCharacter();
-    drawPlatform();
+    updateCharacterPosition();
+    checkCollisions();
     requestAnimationFrame(render);
   }
+
   onMount(() => {
     canvas.focus();
     ctx = canvas.getContext("2d")!;
-    createPlatforms();
+
     render();
   });
 </script>
@@ -117,11 +108,11 @@
   bind:this={canvas}
   {width}
   {height}
-  on:keypress={(e) => handleKeyPress(e.key)}
+  on:keydown={handleKeyPress}
 />
 
 <style>
   canvas {
-    outline: 1px solid;
+    border: 1px solid #000;
   }
 </style>

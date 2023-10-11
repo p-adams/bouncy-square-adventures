@@ -2,6 +2,8 @@
   import { onMount } from "svelte";
 
   const [width, height] = [800, 400];
+  const gravity = 0.5;
+  const jumpStrength = -15;
   let canvas: HTMLCanvasElement;
   let ctx: CanvasRenderingContext2D;
   let character = {
@@ -16,11 +18,9 @@
   let platforms = [
     { x: 50, y: height - 20, width: 150, height: 10 },
     { x: 250, y: height - 50, width: 150, height: 10 },
-    // Add more platforms as needed
+    { x: 450, y: height - 50, width: 200, height: 10 },
+    { x: 350, y: 200, width: 150, height: 10 },
   ];
-
-  const gravity = 0.5;
-  const jumpStrength = -15;
 
   function drawCharacter() {
     ctx.fillStyle = "red";
@@ -29,9 +29,9 @@
 
   function drawPlatforms() {
     ctx.fillStyle = "green";
-    platforms.forEach((platform) => {
+    for (const platform of platforms) {
       ctx.fillRect(platform.x, platform.y, platform.width, platform.height);
-    });
+    }
   }
 
   function jump() {
@@ -52,7 +52,7 @@
   }
 
   function checkCollisions() {
-    platforms.forEach((platform) => {
+    for (const platform of platforms) {
       if (
         character.x + character.width > platform.x &&
         character.x < platform.x + platform.width &&
@@ -65,7 +65,7 @@
           character.velocityY = 0;
         }
       }
-    });
+    }
   }
 
   function handleKeyPress(event: KeyboardEvent) {
@@ -82,6 +82,7 @@
         character.x -= character.speed;
         break;
       default:
+        console.log(`Cannot process ${event.key}`);
         break;
     }
   }
@@ -98,7 +99,6 @@
   onMount(() => {
     canvas.focus();
     ctx = canvas.getContext("2d")!;
-
     render();
   });
 </script>
